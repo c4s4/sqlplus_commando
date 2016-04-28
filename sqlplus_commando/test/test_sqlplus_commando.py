@@ -19,8 +19,8 @@ class TestSqlplusCommando(unittest.TestCase):
 
     def test_run_query_nominal(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
-        result = sqlplus.run_query("SELECT 42 AS RESPONSE, 'This is a test' AS PHRASE FROM DUAL;")
-        self.assertEqual(({'RESPONSE': 42, 'PHRASE': 'This is a test'},), result)
+        result = sqlplus.run_query("SELECT 42 AS RESPONSE FROM DUAL;")
+        self.assertEqual(({'RESPONSE': 42},), result)
 
     # def test_run_query_error(self):
     #     sqlplus = SqlplusCommando(configuration=self.CONFIG)

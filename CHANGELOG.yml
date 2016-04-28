@@ -1,0 +1,16 @@
+# Semantic changelog, see https://github.com/c4s4/changelog
+# 
+# Each release must document an entry such as
+# - release: 1.0.0
+#   date:    2012-02-22
+#   summary: "Release description"
+#   fixed:
+#   - "Description about what was fixed."
+#   added:
+#   - "Description about what was added."
+#   removed:
+#   - "Description about what was removed."
+
+- version: 0.1.0
+  date:    ????-??-??
+  summary: First release

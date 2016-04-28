@@ -1,0 +1,4 @@
+pylint==1.1.0
+astroid==1.0.1
+logilab-common==0.61.0
+

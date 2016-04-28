@@ -1,0 +1,5 @@
+build/
+env/
+.idea/
+.ropeproject/
+*.pyc

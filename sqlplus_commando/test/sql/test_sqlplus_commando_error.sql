@@ -1,0 +1,2 @@
+BAD SQL QUERY;
+

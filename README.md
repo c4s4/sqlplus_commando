@@ -15,7 +15,7 @@ Installation
 
 To install **sqlplus_commando**, you may use one of the following methods:
 
-- Extract its unique class `SqlplusCommando` from tarball (in file
+- Extract classes `SqlplusCommando` and `OracleParser` from tarball (in file
   *sqlplus_commando/sqlplus_commando.py*) and put it in your own source code.
 - Drop its module (file *sqlplus_commando/sqlplus_commando.py* in the tarball)
   in your source directory.
@@ -36,16 +36,17 @@ from sqlplus_commando import SqlplusCommando
 
 mysql = SqlplusCommando(hostname='localhost', database='test',
                         username='test', password='test')
-result = mysql.run_query("SHOW DATABASES")
+result = mysql.run_query("SELECT 42 AS response, 'This is a test' AS question FROM DUAL;")
 print result
 ```
 
 When query returns nothing (after an `INSERT` for instance), method
-`run_query()` will return `None`. If query returns a result set, this will
-be a tuple of dictionaries. For instance, previous sample code could print:
+`run_query()` will return an empty tuple `()`. If query returns a result set,
+this will be a tuple of dictionaries. For instance, previous sample code could
+print:
 
 ```python
-({'Database': 'information_schema'}, {'Database': 'mysql'})
+({'RESPONSE': 42, 'QUESTION': 'This is a test'},)
 ```
 
 Instead of running a query you may run a script as follows::
@@ -102,34 +103,6 @@ You may also disable casting when instantiating the driver, passing
 `cast=False` to the constructor. This casting configuration will apply on all
 calls to `run_query()` or `run_script()` except if you pass a different
 value while calling these methods.
-
-Last insert ID
---------------
-
-To get the ID of the last `INSERT` of a given query, you can pass
-`last_insert_id=True` while calling `run_query()`, as follows:
-
-```python
-query = "INSERT INTO animals (name, age) VALUES ('Reglisse', 14)"
-id = mysql.run_query(query, last_insert_id=True)
-print id
-```
-
-This will return the last `INSERT` ID as an integer.
-
-If you need to get ID of the last `INSERT` running a script, just add a call to 
-MySQL function `last_insert_id()` like so::
-
-```sql
-INSERT INTO animals (name, age) VALUES ('Reglisse', 14);
-SELECT last_insert_id() AS id;
-```
-
-While you run this script, this will return the ID of your last `INSERT`::
-
-```python
-({'id': 1},)
-```
 
 Note
 ----

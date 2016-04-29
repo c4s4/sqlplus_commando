@@ -20,8 +20,8 @@ class TestSqlplusCommando(unittest.TestCase):
 
     def test_run_query_nominal(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
-        result = sqlplus.run_query("SELECT 42 AS RESPONSE, 'This is a test' AS PHRASE FROM DUAL;")
-        self.assertEqual(({'RESPONSE': 42, 'PHRASE': 'This is a test'},), result)
+        result = sqlplus.run_query("SELECT 42 AS response, 'This is a test' AS question FROM DUAL;")
+        self.assertEqual(({'RESPONSE': 42, 'QUESTION': 'This is a test'},), result)
 
     def test_run_unknown_command(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
@@ -38,6 +38,13 @@ class TestSqlplusCommando(unittest.TestCase):
             self.fail('Should have failed')
         except Exception, e:
             self.assertTrue("ERROR at line 1" in e.message)
+
+    def test_run_query_empty(self):
+        script = os.path.join(self.SQL_DIR, 'test_sqlplus_commando.sql')
+        sqlplus = SqlplusCommando(configuration=self.CONFIG)
+        sqlplus.run_script(script)
+        result = sqlplus.run_query("INSERT INTO test (id, name, age) VALUES (2, 'Mignonne', 12);")
+        self.assertEqual((), result)
 
     def test_run_script_nominal(self):
         script = os.path.join(self.SQL_DIR, 'test_sqlplus_commando.sql')

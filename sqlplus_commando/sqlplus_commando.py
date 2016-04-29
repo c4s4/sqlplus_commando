@@ -35,29 +35,20 @@ class SqlplusCommando(object):
         self.cast = cast
 
     def run_query(self, query, cast=None):
-        query = self.QUERY_ERROR_HANDLER + query
-        connection_url = self._get_connection_url()
-        session = subprocess.Popen(['sqlplus', '-S', '-L', '-M', 'HTML ON', connection_url],
-                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        session.stdin.write(query)
-        output, _ = session.communicate()
-        code = session.returncode
-        if code != 0:
-            raise Exception(output.strip())
-        else:
-            if cast is None:
-                cast = self.cast
-            if output:
-                result = OracleParser.parse(output, cast=cast)
-                return result
+        command = self.QUERY_ERROR_HANDLER + query
+        return self._run_command(command, cast=cast)
 
     def run_script(self, script, cast=None):
         if not os.path.isfile(script):
             raise Exception("Script '%s' was not found" % script)
+        command = "@%s" % script
+        return self._run_command(command, cast=cast)
+
+    def _run_command(self, command, cast):
         connection_url = self._get_connection_url()
         session = subprocess.Popen(['sqlplus', '-S', '-L', '-M', 'HTML ON', connection_url],
                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        session.stdin.write("@%s" % script)
+        session.stdin.write(command)
         output, _ = session.communicate()
         code = session.returncode
         if code != 0:

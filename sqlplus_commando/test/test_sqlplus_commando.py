@@ -23,7 +23,6 @@ class TestSqlplusCommando(unittest.TestCase):
         result = sqlplus.run_query("SELECT 42 AS RESPONSE, 'This is a test' AS PHRASE FROM DUAL;")
         self.assertEqual(({'RESPONSE': 42, 'PHRASE': 'This is a test'},), result)
 
-    @unittest.skip("Unknown command errors don't result in a non null return code")
     def test_run_unknown_command(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
         try:
@@ -55,7 +54,6 @@ class TestSqlplusCommando(unittest.TestCase):
         except Exception, e:
             self.assertTrue("Script 'script_that_doesnt_exist.sql' was not found" in str(e))
 
-    @unittest.skip("Unknown command errors don't result in a non null return code")
     def test_run_script_syntax_error(self):
         script = os.path.join(self.SQL_DIR, 'test_sqlplus_commando_error.sql')
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
@@ -63,7 +61,7 @@ class TestSqlplusCommando(unittest.TestCase):
             sqlplus.run_script(script)
             self.fail('Should have failed')
         except Exception, e:
-            self.assertTrue("You have an error in your SQL syntax" in e.message)
+            self.assertTrue("unknown command" in e.message)
 
     def test_process_parameters(self):
         query = "%s %s %s"

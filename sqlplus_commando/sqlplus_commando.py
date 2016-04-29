@@ -112,6 +112,7 @@ class OracleParser(HTMLParser.HTMLParser):
          lambda d: datetime.datetime.strptime(d[:17], OracleParser.DATE_FORMAT)),
         (r'NULL', lambda d: None),
     )
+    UNKNOWN_COMMAND = 'SP2-0734: unknown command beginning'
 
     def __init__(self, cast):
         HTMLParser.HTMLParser.__init__(self)
@@ -125,6 +126,10 @@ class OracleParser(HTMLParser.HTMLParser):
 
     @staticmethod
     def parse(source, cast):
+        if OracleParser.UNKNOWN_COMMAND in source:
+            start = source.index(OracleParser.UNKNOWN_COMMAND)
+            message = source[start:].split('\n')[0]
+            raise Exception(message)
         parser = OracleParser(cast)
         parser.feed(source)
         return tuple(parser.result)

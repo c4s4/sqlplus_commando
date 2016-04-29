@@ -60,8 +60,16 @@ class SqlplusCommando(object):
         result = []
         lines = output.strip().split('\n')
         fields = lines[0].split(' ')
+        fields = []
+        shift = 0
+        for field in ' '.split(lines[1].strip()):
+            start = shift
+            end = start + len(field)
+            shift = end + 1
+            fields.append((start, end))
         for line in lines[2:]:
-            values = [e.strip() for e in line.split(' ')]
+            line = line.replace('\t', ' '*8)
+            values = [line[f[0]:f[1]].strip() for f in fields]
             if cast:
                 values = SqlplusCommando._cast_list(values)
             result.append(dict(zip(fields, values)))

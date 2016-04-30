@@ -36,11 +36,11 @@ WHENEVER OSERROR EXIT 9;
             raise Exception('Missing database configuration')
         self.cast = cast
 
-    def run_query(self, query, cast=None):
+    def run_query(self, query, cast=True):
         command = self.QUERY_ERROR_HANDLER + query
         return self._run_command(command, cast=cast)
 
-    def run_script(self, script, cast=None):
+    def run_script(self, script, cast=True):
         if not os.path.isfile(script):
             raise Exception("Script '%s' was not found" % script)
         with open(script) as stream:
@@ -67,8 +67,6 @@ WHENEVER OSERROR EXIT 9;
         if code != 0:
             raise Exception(output.strip())
         else:
-            if cast is None:
-                cast = self.cast
             if output:
                 result = OracleParser.parse(output, cast=cast)
                 return result
@@ -118,6 +116,7 @@ WHENEVER OSERROR EXIT 9;
 class OracleParser(HTMLParser.HTMLParser):
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
+    UNKNOWN_COMMAND = 'SP2-0734: unknown command beginning'
     CASTS = (
         (r'-?\d+', int),
         (r'-?\d*,?\d*([Ee][+-]?\d+)?', lambda f: float(f.replace(',', '.'))),
@@ -126,7 +125,6 @@ class OracleParser(HTMLParser.HTMLParser):
                                               OracleParser.DATE_FORMAT)),
         (r'NULL', lambda d: None),
     )
-    UNKNOWN_COMMAND = 'SP2-0734: unknown command beginning'
 
     def __init__(self, cast):
         HTMLParser.HTMLParser.__init__(self)

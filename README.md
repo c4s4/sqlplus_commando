@@ -3,7 +3,8 @@ sqlplus_commando
 
 Installing a Oracle driver on a machine is sometime a pain, or even impossible.
 Furthermore you may want to distribute self contained scripts that access Oracle
-without having to ask for additional software installation.
+without having to ask for additional software installation. Finally, you may
+want to automate scripts to should be run with SQL*Plus.
 
 **sqlplus_commando** is a pure Python Oracle driver that calls Oracle running
 *sqlplus* on the command line. It was designed so that you may use it by

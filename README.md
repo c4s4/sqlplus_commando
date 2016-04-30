@@ -32,29 +32,23 @@ Usage
 
 You can use this driver in your code just like so:
 
-```python
-from sqlplus_commando import SqlplusCommando
-
-mysql = SqlplusCommando(hostname='localhost', database='test',
-                        username='test', password='test')
-result = mysql.run_query("SELECT 42 AS response, 'This is a test' AS question FROM DUAL;")
-print result
-```
+    from sqlplus_commando import SqlplusCommando
+    
+    mysql = SqlplusCommando(hostname='localhost', database='test',
+                            username='test', password='test')
+    result = mysql.run_query("SELECT 42 AS response, 'This is a test' AS question FROM DUAL;")
+    print result
 
 When query returns nothing (after an `INSERT` for instance), method
 `run_query()` will return an empty tuple `()`. If query returns a result set,
 this will be a tuple of dictionaries. For instance, previous sample code could
 print:
 
-```python
-({'RESPONSE': 42, 'QUESTION': 'This is a test'},)
-```
+    ({'RESPONSE': 42, 'QUESTION': 'This is a test'},)
 
 Instead of running a query you may run a script as follows:
 
-```python
-result = mysql.run_script('my_script.sql')
-```
+    result = mysql.run_script('my_script.sql')
 
 Parameters
 ----------
@@ -62,16 +56,14 @@ Parameters
 You can have values such as `%(foo)s` in you query that will be replaced
 with corresponding value of the parameters dictionary. For instance:
 
-```python
-from mysql_commando import MysqlCommando
-
-mysql = MysqlCommando(hostname='localhost', database='test',
-                      username='test', password='test')
-parameters = {'name': 'reglisse'}
-result = mysql.run_query(query="SELECT * FROM animals WHERE name=%(name)s",
-                         parameters=parameters)
-print result
-```
+    from mysql_commando import MysqlCommando
+    
+    mysql = MysqlCommando(hostname='localhost', database='test',
+                          username='test', password='test')
+    parameters = {'name': 'reglisse'}
+    result = mysql.run_query(query="SELECT * FROM animals WHERE name=%(name)s",
+                             parameters=parameters)
+    print result
 
 You may not provide parameters running a script. To do so, call `run_query()`
 with parameters passing query `open('my_script.sql').read()`.
@@ -91,14 +83,12 @@ casted to Python integers. It should not because phone numbers can start with
 To avoid this, you may pass `cast=False` when calling `run_query()` or
 `run_script()`, like so:
 
-```python
-from mysql_commando import MysqlCommando
-
-mysql = MysqlCommando(hostname='localhost', database='test',
-                      username='test', password='test')
-result = mysql.run_query("SELECT phone FROM users WHERE name='bob')", cast=False)
-print result
-```
+    from mysql_commando import MysqlCommando
+    
+    mysql = MysqlCommando(hostname='localhost', database='test',
+                          username='test', password='test')
+    result = mysql.run_query("SELECT phone FROM users WHERE name='bob')", cast=False)
+    print result
 
 You may also disable casting when instantiating the driver, passing
 `cast=False` to the constructor. This casting configuration will apply on all
@@ -111,18 +101,14 @@ Error management
 While running a query or a script with *sqlplus*, you must add following SQL
 commands so that the return value is différent from *0*:
 
-```sql
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
-WHENEVER OSERROR EXIT 9;
-```
+    WHENEVER SQLERROR EXIT SQL.SQLCODE;
+    WHENEVER OSERROR EXIT 9;
 
 These lines are added before queries or script to run to avoid having to parse
 the result for error messages. Nevertheless, there are some cases when these
 lines won't help for error detection. For instance, following query:
 
-```sql
-BAD SQL QUERY;
-```
+    BAD SQL QUERY;
 
 This won't result in an error in *sqlplus* and we must parse the result for the
 error string `SP2-0734: unknown command`. This is done by default, but you may

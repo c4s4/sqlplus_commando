@@ -33,6 +33,13 @@ class TestSqlplusCommando(unittest.TestCase):
         except Exception, e:
             self.assertTrue("unknown command" in e.message)
 
+    def test_run_unknown_command_disable(self):
+        sqlplus = SqlplusCommando(configuration=self.CONFIG)
+        result = sqlplus.run_query("SELECT '%s' AS message FROM DUAL;" %
+                                   OracleParser.UNKNOWN_COMMAND,
+                                   check_unknown_command=False)
+        self.assertTrue(OracleParser.UNKNOWN_COMMAND in result[0]['MESSAGE'])
+
     def test_run_query_error(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
         try:

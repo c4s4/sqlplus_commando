@@ -105,6 +105,30 @@ You may also disable casting when instantiating the driver, passing
 calls to `run_query()` or `run_script()` except if you pass a different
 value while calling these methods.
 
+Error management
+----------------
+
+While running a query or a script with *sqlplus*, you must add following SQL
+commands so that the return value is différent from *0*:
+
+```sql
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
+WHENEVER OSERROR EXIT 9;
+```
+
+These lines are added before queries or script to run to avoid having to parse
+the result for error messages. Nevertheless, there are some cases when these
+lines won't help for error detection. For instance, following query:
+
+```sql
+BAD SQL QUERY;
+```
+
+This won't result in an error in *sqlplus* and we must parse the result for the
+error string `SP2-0734: unknown command`. This is done by default, but you may
+avoid this passing parameter `check_unknown_command=False` while calling
+functions `run_query` or `run_script`.
+
 Note
 ----
 

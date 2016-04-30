@@ -15,7 +15,6 @@ class SqlplusCommando(object):
     QUERY_ERROR_HANDLER = '''WHENEVER SQLERROR EXIT SQL.SQLCODE;
 WHENEVER OSERROR EXIT 9;
 '''
-    UNKNOWN_COMMAND = 'SP2-0734: unknown command'
     ISO_FORMAT = '%Y-%m-%d %H:%M:%S'
 
     def __init__(self, configuration=None,
@@ -36,11 +35,12 @@ WHENEVER OSERROR EXIT 9;
             raise Exception('Missing database configuration')
         self.cast = cast
 
-    def run_query(self, query, cast=True):
+    def run_query(self, query, cast=True, check_unknown_command=True):
         command = self.QUERY_ERROR_HANDLER + query
-        return self._run_command(command, cast=cast)
+        return self._run_command(command, cast=cast,
+            check_unknown_command=check_unknown_command)
 
-    def run_script(self, script, cast=True):
+    def run_script(self, script, cast=True, check_unknown_command=True):
         if not os.path.isfile(script):
             raise Exception("Script '%s' was not found" % script)
         with open(script) as stream:
@@ -50,11 +50,12 @@ WHENEVER OSERROR EXIT 9;
         with open(filename, 'wb') as stream:
             stream.write(self.QUERY_ERROR_HANDLER + source)
         try:
-            return self._run_command("@%s" % filename, cast=cast)
+            return self._run_command("@%s" % filename, cast=cast,
+                check_unknown_command=check_unknown_command)
         finally:
             os.remove(filename)
 
-    def _run_command(self, command, cast):
+    def _run_command(self, command, cast, check_unknown_command):
         connection_url = self._get_connection_url()
         session = subprocess.Popen(['sqlplus', '-S', '-L', '-M', 'HTML ON',
                                     connection_url],
@@ -68,7 +69,8 @@ WHENEVER OSERROR EXIT 9;
             raise Exception(output.strip())
         else:
             if output:
-                result = OracleParser.parse(output, cast=cast)
+                result = OracleParser.parse(output, cast=cast,
+                    check_unknown_command=check_unknown_command)
                 return result
 
     def _get_connection_url(self):
@@ -116,7 +118,7 @@ WHENEVER OSERROR EXIT 9;
 class OracleParser(HTMLParser.HTMLParser):
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
-    UNKNOWN_COMMAND = 'SP2-0734: unknown command beginning'
+    UNKNOWN_COMMAND = 'SP2-0734: unknown command'
     CASTS = (
         (r'-?\d+', int),
         (r'-?\d*,?\d*([Ee][+-]?\d+)?', lambda f: float(f.replace(',', '.'))),
@@ -137,8 +139,8 @@ class OracleParser(HTMLParser.HTMLParser):
         self.data = ''
 
     @staticmethod
-    def parse(source, cast):
-        if OracleParser.UNKNOWN_COMMAND in source:
+    def parse(source, cast, check_unknown_command):
+        if OracleParser.UNKNOWN_COMMAND in source and check_unknown_command:
             start = source.index(OracleParser.UNKNOWN_COMMAND)
             message = source[start:].split('\n')[0]
             raise Exception(message)

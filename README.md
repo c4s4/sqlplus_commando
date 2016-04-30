@@ -3,7 +3,8 @@ sqlplus_commando
 
 Installing a Oracle driver on a machine is sometime a pain, or even impossible.
 Furthermore you may want to distribute self contained scripts that access Oracle
-without having to ask for additional software installation.
+without having to ask for additional software installation. Finally, you may
+want to automate scripts to should be run with SQL*Plus.
 
 **sqlplus_commando** is a pure Python Oracle driver that calls Oracle running
 *sqlplus* on the command line. It was designed so that you may use it by
@@ -15,7 +16,7 @@ Installation
 
 To install **sqlplus_commando**, you may use one of the following methods:
 
-- Extract its unique class `SqlplusCommando` from tarball (in file
+- Extract classes `SqlplusCommando` and `OracleParser` from tarball (in file
   *sqlplus_commando/sqlplus_commando.py*) and put it in your own source code.
 - Drop its module (file *sqlplus_commando/sqlplus_commando.py* in the tarball)
   in your source directory.
@@ -36,16 +37,17 @@ from sqlplus_commando import SqlplusCommando
 
 mysql = SqlplusCommando(hostname='localhost', database='test',
                         username='test', password='test')
-result = mysql.run_query("SHOW DATABASES")
+result = mysql.run_query("SELECT 42 AS response, 'This is a test' AS question FROM DUAL;")
 print result
 ```
 
 When query returns nothing (after an `INSERT` for instance), method
-`run_query()` will return `None`. If query returns a result set, this will
-be a tuple of dictionaries. For instance, previous sample code could print:
+`run_query()` will return an empty tuple `()`. If query returns a result set,
+this will be a tuple of dictionaries. For instance, previous sample code could
+print:
 
 ```python
-({'Database': 'information_schema'}, {'Database': 'mysql'})
+({'RESPONSE': 42, 'QUESTION': 'This is a test'},)
 ```
 
 Instead of running a query you may run a script as follows::
@@ -103,33 +105,29 @@ You may also disable casting when instantiating the driver, passing
 calls to `run_query()` or `run_script()` except if you pass a different
 value while calling these methods.
 
-Last insert ID
---------------
+Error management
+----------------
 
-To get the ID of the last `INSERT` of a given query, you can pass
-`last_insert_id=True` while calling `run_query()`, as follows:
-
-```python
-query = "INSERT INTO animals (name, age) VALUES ('Reglisse', 14)"
-id = mysql.run_query(query, last_insert_id=True)
-print id
-```
-
-This will return the last `INSERT` ID as an integer.
-
-If you need to get ID of the last `INSERT` running a script, just add a call to 
-MySQL function `last_insert_id()` like so::
+While running a query or a script with *sqlplus*, you must add following SQL
+commands so that the return value is différent from *0*:
 
 ```sql
-INSERT INTO animals (name, age) VALUES ('Reglisse', 14);
-SELECT last_insert_id() AS id;
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
+WHENEVER OSERROR EXIT 9;
 ```
 
-While you run this script, this will return the ID of your last `INSERT`::
+These lines are added before queries or script to run to avoid having to parse
+the result for error messages. Nevertheless, there are some cases when these
+lines won't help for error detection. For instance, following query:
 
-```python
-({'id': 1},)
+```sql
+BAD SQL QUERY;
 ```
+
+This won't result in an error in *sqlplus* and we must parse the result for the
+error string `SP2-0734: unknown command`. This is done by default, but you may
+avoid this passing parameter `check_unknown_command=False` while calling
+functions `run_query` or `run_script`.
 
 Note
 ----

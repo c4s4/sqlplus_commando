@@ -4,17 +4,16 @@ sqlplus_commando
 Installing a Oracle driver on a machine is sometime a pain, or even impossible.
 Furthermore you may want to distribute self contained scripts that access Oracle
 without having to ask for additional software installation. Finally, you may
-want to automate scripts to should be run with SQL*Plus.
+want to automate scripts that should run with SQL\*Plus.
 
-**sqlplus_commando** is a pure Python Oracle driver that calls Oracle running
-*sqlplus* on the command line. It was designed so that you may use it by
-dropping its module in your source tree or even copy its class in your own
-source code.
+*sqlplus_commando* is a pure Python Oracle driver that calls *sqlplus* on the
+command line. It was designed so that you may use it by dropping its module in
+your source tree or even copy its class in your own source code.
 
 Installation
 ------------
 
-To install **sqlplus_commando**, you may use one of the following methods:
+To install *sqlplus_commando*, you may use one of the following methods:
 
 - Extract classes `SqlplusCommando` and `OracleParser` from tarball (in file
   *sqlplus_commando/sqlplus_commando.py*) and put it in your own source code.
@@ -25,7 +24,7 @@ To install **sqlplus_commando**, you may use one of the following methods:
 
 The Apache license grants you a right to use this driver in any of your project
 (even commercial) provided that you mention that you are using
-**sqlplus_commando** in your copyright notice.
+*sqlplus_commando* in your copyright notice.
 
 Usage
 -----
@@ -35,9 +34,9 @@ You can use this driver in your code just like so:
 ```python
 from sqlplus_commando import SqlplusCommando
 
-mysql = SqlplusCommando(hostname='localhost', database='test',
-                        username='test', password='test')
-result = mysql.run_query("SELECT 42 AS response, 'This is a test' AS question FROM DUAL;")
+sqlplus = SqlplusCommando(hostname='localhost', database='test',
+                          username='test', password='test')
+result = sqlplus.run_query("SELECT 42 AS response, 'This is a test' AS question FROM DUAL;")
 print result
 ```
 
@@ -53,7 +52,7 @@ print:
 Instead of running a query you may run a script as follows:
 
 ```python
-result = mysql.run_script('my_script.sql')
+result = sqlplus.run_script('my_script.sql')
 ```
 
 Parameters
@@ -63,13 +62,13 @@ You can have values such as `%(foo)s` in you query that will be replaced
 with corresponding value of the parameters dictionary. For instance:
 
 ```python
-from mysql_commando import MysqlCommando
+from sqlplus_commando import sqlplusCommando
 
-mysql = MysqlCommando(hostname='localhost', database='test',
-                      username='test', password='test')
+sqlplus = sqlplusCommando(hostname='localhost', database='test',
+                          username='test', password='test')
 parameters = {'name': 'reglisse'}
-result = mysql.run_query(query="SELECT * FROM animals WHERE name=%(name)s",
-                         parameters=parameters)
+result = sqlplus.run_query(query="SELECT * FROM animals WHERE name=%(name)s",
+                           parameters=parameters)
 print result
 ```
 
@@ -79,8 +78,8 @@ with parameters passing query `open('my_script.sql').read()`.
 Result set types
 ----------------
 
-**mysql_commando** performs auto casting before returning result sets. As it
-calls MySQL on command line, every value in the result set is a string. For
+*sqlplus_commando* performs auto casting before returning result sets. As it
+calls *sqlplus* on command line, every value in the result set is a string. For
 convenience, it casts integers, floats, dates and NULL into native Python types.
 
 There are situations where this might not be accurate. For instance, if a column
@@ -92,11 +91,11 @@ To avoid this, you may pass `cast=False` when calling `run_query()` or
 `run_script()`, like so:
 
 ```python
-from mysql_commando import MysqlCommando
+from sqlplus_commando import sqlplusCommando
 
-mysql = MysqlCommando(hostname='localhost', database='test',
-                      username='test', password='test')
-result = mysql.run_query("SELECT phone FROM users WHERE name='bob')", cast=False)
+sqlplus = sqlplusCommando(hostname='localhost', database='test',
+                          username='test', password='test')
+result = sqlplus.run_query("SELECT phone FROM users WHERE name='bob')", cast=False)
 print result
 ```
 

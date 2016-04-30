@@ -29,7 +29,7 @@ clean:
 
 check:
 	@echo "$(YELLOW)Checking Python code$(CLEAR)"
-	. venv/bin/activate && pylint --rcfile=etc/pylint.cfg $(NAME)
+	. venv/bin/activate && pylint --rcfile=etc/pylint.cfg $(NAME) $(NAME).test
 
 test: check
 	@echo "$(YELLOW)Running unit tests$(CLEAR)"

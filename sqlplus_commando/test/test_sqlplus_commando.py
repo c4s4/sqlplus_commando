@@ -7,7 +7,7 @@ import unittest
 from sqlplus_commando import SqlplusCommando, OracleParser
 
 
-#pylint: disable=W0212
+# pylint: disable=W0212
 class TestSqlplusCommando(unittest.TestCase):
 
     CONFIG = {
@@ -20,8 +20,10 @@ class TestSqlplusCommando(unittest.TestCase):
 
     def test_run_query_nominal(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
-        result = sqlplus.run_query("SELECT 42 AS response, 'This is a test' AS question FROM DUAL;")
-        self.assertEqual(({'RESPONSE': 42, 'QUESTION': 'This is a test'},), result)
+        result = sqlplus.run_query("SELECT 42 AS response, 'This is a test' "
+                                   "AS question FROM DUAL;")
+        self.assertEqual(({'RESPONSE': 42, 'QUESTION': 'This is a test'},),
+                         result)
 
     def test_run_unknown_command(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
@@ -43,7 +45,8 @@ class TestSqlplusCommando(unittest.TestCase):
         script = os.path.join(self.SQL_DIR, 'test_sqlplus_commando.sql')
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
         sqlplus.run_script(script)
-        result = sqlplus.run_query("INSERT INTO test (id, name, age) VALUES (2, 'Mignonne', 12);")
+        result = sqlplus.run_query("INSERT INTO test (id, name, age) VALUES "
+                                   "(2, 'Mignonne', 12);")
         self.assertEqual((), result)
 
     def test_run_script_nominal(self):
@@ -56,13 +59,24 @@ class TestSqlplusCommando(unittest.TestCase):
     def test_run_script_error(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
         try:
-            sqlplus.run_script("script_that_doesnt_exist.sql")
+            sqlplus.run_script("unknown.sql")
             self.fail('Should have failed')
         except Exception, e:
-            self.assertTrue("Script 'script_that_doesnt_exist.sql' was not found" in str(e))
+            self.assertTrue("Script 'unknown.sql' was not found" in str(e))
 
     def test_run_script_syntax_error(self):
         script = os.path.join(self.SQL_DIR, 'test_sqlplus_commando_error.sql')
+        sqlplus = SqlplusCommando(configuration=self.CONFIG)
+        try:
+            sqlplus.run_script(script)
+            self.fail('Should have failed')
+        except Exception, e:
+            self.assertTrue("ORA-00942: table or view does not exist" in
+                            e.message)
+
+    def test_run_script_unknown_command(self):
+        script = os.path.join(self.SQL_DIR,
+                              'test_sqlplus_commando_unknown_command.sql')
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
         try:
             sqlplus.run_script(script)
@@ -74,7 +88,7 @@ class TestSqlplusCommando(unittest.TestCase):
         query = "%s %s %s"
         parameters = [1, 'deux', datetime.datetime(2014, 01, 22, 13, 10, 33)]
         expected = "1 'deux' '2014-01-22 13:10:33'"
-        actual = SqlplusCommando._process_parameters(query, parameters) #pylint: disable=W0212
+        actual = SqlplusCommando._process_parameters(query, parameters)
         self.assertEqual(expected, actual)
 
     def test_cast(self):
@@ -99,17 +113,23 @@ class TestSqlplusCommando(unittest.TestCase):
 
     def test_cast_query(self):
         driver = SqlplusCommando(configuration=self.CONFIG)
-        driver.run_script(os.path.join(self.SQL_DIR, 'test_sqlplus_commando_cast_query.sql'))
+        driver.run_script(os.path.join(self.SQL_DIR,
+                                       'test_sqlplus_commando_cast_query.sql'))
         expected = (
-            {'I': 123, 'F': 1.23, 'D': datetime.datetime(2014, 3, 29, 11, 18, 0), 'S': 'test'},
-            {'I': -456, 'F': -1.2e-34, 'D': datetime.datetime(2014, 3, 29), 'S': 123},
+            {'I': 123, 'F': 1.23,
+             'D': datetime.datetime(2014, 3, 29, 11, 18, 0), 'S': 'test'},
+            {'I': -456, 'F': -1.2e-34,
+             'D': datetime.datetime(2014, 3, 29), 'S': 123},
         )
         actual = driver.run_query("SELECT i, f, d, s FROM test;", cast=True)
         self.assertEqual(expected, actual)
-        driver.run_script(os.path.join(self.SQL_DIR, 'test_sqlplus_commando_cast_query.sql'))
+        driver.run_script(os.path.join(self.SQL_DIR,
+                                       'test_sqlplus_commando_cast_query.sql'))
         expected = (
-            {'I': '123', 'F': '1,23', 'D': '29/03/14 11:18:00,000000', 'S': 'test'},
-            {'I': '-456', 'F': '-1,200E-34', 'D': '29/03/14 00:00:00,000000', 'S': '123'},
+            {'I': '123', 'F': '1,23',
+             'D': '29/03/14 11:18:00,000000', 'S': 'test'},
+            {'I': '-456', 'F': '-1,200E-34',
+             'D': '29/03/14 00:00:00,000000', 'S': '123'},
         )
         actual = driver.run_query("SELECT i, f, d, s FROM test;", cast=False)
         self.assertEqual(expected, actual)
@@ -117,4 +137,3 @@ class TestSqlplusCommando(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

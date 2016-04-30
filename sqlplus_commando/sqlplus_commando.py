@@ -5,14 +5,16 @@ from __future__ import with_statement
 import re
 import os.path
 import datetime
+import tempfile
 import subprocess
 import HTMLParser
 
 
-# pylint: disable=E1103
 class SqlplusCommando(object):
 
-    QUERY_ERROR_HANDLER = "WHENEVER SQLERROR EXIT SQL.SQLCODE;\nWHENEVER OSERROR EXIT 9;\n"
+    QUERY_ERROR_HANDLER = '''WHENEVER SQLERROR EXIT SQL.SQLCODE;
+WHENEVER OSERROR EXIT 9;
+'''
     UNKNOWN_COMMAND = 'SP2-0734: unknown command'
     ISO_FORMAT = '%Y-%m-%d %H:%M:%S'
 
@@ -41,13 +43,24 @@ class SqlplusCommando(object):
     def run_script(self, script, cast=None):
         if not os.path.isfile(script):
             raise Exception("Script '%s' was not found" % script)
-        command = "@%s" % script
-        return self._run_command(command, cast=cast)
+        with open(script) as stream:
+            source = stream.read()
+        filename = tempfile.mkstemp(prefix='sqlplus_commando-',
+                                    suffix='.sql')[1]
+        with open(filename, 'wb') as stream:
+            stream.write(self.QUERY_ERROR_HANDLER + source)
+        try:
+            return self._run_command("@%s" % filename, cast=cast)
+        finally:
+            os.remove(filename)
 
     def _run_command(self, command, cast):
         connection_url = self._get_connection_url()
-        session = subprocess.Popen(['sqlplus', '-S', '-L', '-M', 'HTML ON', connection_url],
-                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        session = subprocess.Popen(['sqlplus', '-S', '-L', '-M', 'HTML ON',
+                                    connection_url],
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
         session.stdin.write(command)
         output, _ = session.communicate()
         code = session.returncode
@@ -109,7 +122,8 @@ class OracleParser(HTMLParser.HTMLParser):
         (r'-?\d+', int),
         (r'-?\d*,?\d*([Ee][+-]?\d+)?', lambda f: float(f.replace(',', '.'))),
         (r'\d\d/\d\d/\d\d \d\d:\d\d:\d\d,\d*',
-         lambda d: datetime.datetime.strptime(d[:17], OracleParser.DATE_FORMAT)),
+         lambda d: datetime.datetime.strptime(d[:17],
+                                              OracleParser.DATE_FORMAT)),
         (r'NULL', lambda d: None),
     )
     UNKNOWN_COMMAND = 'SP2-0734: unknown command beginning'

@@ -30,7 +30,7 @@ The Apache license grants you a right to use this driver in any of your project
 Usage
 -----
 
-You can use this driver in your code just like so::
+You can use this driver in your code just like so:
 
 ```python
 from sqlplus_commando import SqlplusCommando
@@ -50,7 +50,7 @@ print:
 ({'RESPONSE': 42, 'QUESTION': 'This is a test'},)
 ```
 
-Instead of running a query you may run a script as follows::
+Instead of running a query you may run a script as follows:
 
 ```python
 result = mysql.run_script('my_script.sql')
@@ -60,7 +60,7 @@ Parameters
 ----------
 
 You can have values such as `%(foo)s` in you query that will be replaced
-with corresponding value of the parameters dictionary. For instance::
+with corresponding value of the parameters dictionary. For instance:
 
 ```python
 from mysql_commando import MysqlCommando

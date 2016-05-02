@@ -25,6 +25,13 @@ class TestSqlplusCommando(unittest.TestCase):
         self.assertEqual(({'RESPONSE': 42, 'QUESTION': 'This is a test'},),
                          result)
 
+    def test_run_query_parameters(self):
+        sqlplus = SqlplusCommando(configuration=self.CONFIG)
+        params = {'response': 42}
+        result = sqlplus.run_query("SELECT %(response)s AS response FROM DUAL;",
+                                   parameters=params)
+        self.assertEqual(({'RESPONSE': 42},), result)
+
     def test_run_unknown_command(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
         try:

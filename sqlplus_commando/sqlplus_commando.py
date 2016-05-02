@@ -35,7 +35,9 @@ WHENEVER OSERROR EXIT 9;
             raise Exception('Missing database configuration')
         self.cast = cast
 
-    def run_query(self, query, cast=True, check_unknown_command=True):
+    def run_query(self, query, parameters={}, cast=True,
+                  check_unknown_command=True):
+        query = self._process_parameters(query, parameters)
         command = self.QUERY_ERROR_HANDLER + query
         return self._run_command(command, cast=cast,
             check_unknown_command=check_unknown_command)

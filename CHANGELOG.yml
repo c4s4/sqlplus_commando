@@ -11,6 +11,10 @@
 #   removed:
 #   - "Description about what was removed."
 
+- version: 0.1.4
+  date:    2016-05-02
+  summary: Added query parameters management
+
 - version: 0.1.3
   date:    2016-04-30
   summary: Fixed documentation format

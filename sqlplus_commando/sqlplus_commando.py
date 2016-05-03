@@ -16,6 +16,7 @@ class SqlplusCommando(object):
 WHENEVER OSERROR EXIT 9;
 '''
     ISO_FORMAT = '%Y-%m-%d %H:%M:%S'
+    EXIT = '\nexit;'
 
     def __init__(self, configuration=None,
                  hostname=None, database=None,
@@ -65,7 +66,7 @@ WHENEVER OSERROR EXIT 9;
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         session.stdin.write(command)
-        output, _ = session.communicate()
+        output, _ = session.communicate(self.EXIT)
         code = session.returncode
         if code != 0:
             raise Exception(OracleErrorParser.parse(output))

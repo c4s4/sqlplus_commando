@@ -68,11 +68,11 @@ WHENEVER OSERROR EXIT 9;
         output, _ = session.communicate()
         code = session.returncode
         if code != 0:
-            raise Exception(output.strip())
+            raise Exception(OracleErrorParser.parse(output))
         else:
             if output:
-                result = OracleParser.parse(output, cast=cast,
-                    check_unknown_command=check_unknown_command)
+                result = OracleResponseParser.parse(output, cast=cast,
+                                                    check_unknown_command=check_unknown_command)
                 return result
 
     def _get_connection_url(self):
@@ -117,7 +117,7 @@ WHENEVER OSERROR EXIT 9;
         return string.replace("'", "''")
 
 
-class OracleParser(HTMLParser.HTMLParser):
+class OracleResponseParser(HTMLParser.HTMLParser):
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
     UNKNOWN_COMMAND = 'SP2-0734: unknown command'
@@ -126,7 +126,7 @@ class OracleParser(HTMLParser.HTMLParser):
         (r'-?\d*,?\d*([Ee][+-]?\d+)?', lambda f: float(f.replace(',', '.'))),
         (r'\d\d/\d\d/\d\d \d\d:\d\d:\d\d,\d*',
          lambda d: datetime.datetime.strptime(d[:17],
-                                              OracleParser.DATE_FORMAT)),
+                                              OracleResponseParser.DATE_FORMAT)),
         (r'NULL', lambda d: None),
     )
 
@@ -142,11 +142,9 @@ class OracleParser(HTMLParser.HTMLParser):
 
     @staticmethod
     def parse(source, cast, check_unknown_command):
-        if OracleParser.UNKNOWN_COMMAND in source and check_unknown_command:
-            start = source.index(OracleParser.UNKNOWN_COMMAND)
-            message = source[start:].split('\n')[0]
-            raise Exception(message)
-        parser = OracleParser(cast)
+        if OracleResponseParser.UNKNOWN_COMMAND in source and check_unknown_command:
+            raise Exception(OracleErrorParser.parse(source))
+        parser = OracleResponseParser(cast)
         parser.feed(source)
         return tuple(parser.result)
 
@@ -183,7 +181,35 @@ class OracleParser(HTMLParser.HTMLParser):
 
     @staticmethod
     def _cast(value):
-        for regexp, function in OracleParser.CASTS:
+        for regexp, function in OracleResponseParser.CASTS:
             if re.match("^%s$" % regexp, value):
                 return function(value)
         return value
+
+
+class OracleErrorParser(HTMLParser.HTMLParser):
+
+    UNKNOWN_COMMAND = 'SP2-0734: unknown command'
+
+    def __init__(self):
+        HTMLParser.HTMLParser.__init__(self)
+        self.active = False
+        self.message = ''
+
+    @staticmethod
+    def parse(source):
+        parser = OracleErrorParser()
+        parser.feed(source)
+        return '\n'.join([l for l in parser.message.split('\n') if l.strip() != ''])
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'body':
+            self.active = True
+
+    def handle_endtag(self, tag):
+        if tag == 'body':
+            self.active = False
+
+    def handle_data(self, data):
+        if self.active:
+            self.message += data

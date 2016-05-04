@@ -16,6 +16,7 @@
   summary: ???
   fixed:
   - "Fixed script execution."
+  - "Fixed documentation in README file."
 
 - version: 0.1.5
   date:    2016-05-03

@@ -5,18 +5,15 @@ from __future__ import with_statement
 import re
 import os.path
 import datetime
-import tempfile
 import subprocess
 import HTMLParser
 
 
 class SqlplusCommando(object):
 
-    QUERY_ERROR_HANDLER = '''WHENEVER SQLERROR EXIT SQL.SQLCODE;
-WHENEVER OSERROR EXIT 9;
-'''
+    CATCH_ERRORS = "WHENEVER SQLERROR EXIT SQL.SQLCODE;\nWHENEVER OSERROR EXIT 9;\n"
+    EXIT_COMMAND = "\ncommit;\nexit;\n"
     ISO_FORMAT = '%Y-%m-%d %H:%M:%S'
-    EXIT = '\nexit;'
 
     def __init__(self, configuration=None,
                  hostname=None, database=None,
@@ -38,25 +35,21 @@ WHENEVER OSERROR EXIT 9;
 
     def run_query(self, query, parameters={}, cast=True,
                   check_unknown_command=True):
-        query = self._process_parameters(query, parameters)
-        command = self.QUERY_ERROR_HANDLER + query
+        command = self._process_query(query=query, parameters=parameters)
         return self._run_command(command, cast=cast,
-            check_unknown_command=check_unknown_command)
+                                 check_unknown_command=check_unknown_command)
 
     def run_script(self, script, cast=True, check_unknown_command=True):
         if not os.path.isfile(script):
             raise Exception("Script '%s' was not found" % script)
         with open(script) as stream:
             source = stream.read()
-        filename = tempfile.mkstemp(prefix='sqlplus_commando-',
-                                    suffix='.sql')[1]
-        with open(filename, 'wb') as stream:
-            stream.write(self.QUERY_ERROR_HANDLER + source)
-        try:
-            return self._run_command("@%s" % filename, cast=cast,
-                check_unknown_command=check_unknown_command)
-        finally:
-            os.remove(filename)
+        return self.run_query(query=source, cast=cast, check_unknown_command=check_unknown_command)
+
+    def _process_query(self, query, parameters={}):
+        if parameters:
+            query = self._process_parameters(query, parameters)
+        return self.CATCH_ERRORS + query
 
     def _run_command(self, command, cast, check_unknown_command):
         connection_url = self._get_connection_url()
@@ -66,7 +59,7 @@ WHENEVER OSERROR EXIT 9;
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         session.stdin.write(command)
-        output, _ = session.communicate(self.EXIT)
+        output, _ = session.communicate(self.EXIT_COMMAND)
         code = session.returncode
         if code != 0:
             raise Exception(OracleErrorParser.parse(output))
@@ -78,7 +71,7 @@ WHENEVER OSERROR EXIT 9;
 
     def _get_connection_url(self):
         return "%s/%s@%s/%s" % \
-            (self.username, self.password, self.hostname, self.database)
+               (self.username, self.password, self.hostname, self.database)
 
     @staticmethod
     def _process_parameters(query, parameters):

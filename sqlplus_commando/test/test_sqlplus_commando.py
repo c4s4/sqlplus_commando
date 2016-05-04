@@ -1,4 +1,4 @@
-OracleResultParser#!/usr/bin/env python
+#!/usr/bin/env python
 # encoding: UTF-8
 
 import os

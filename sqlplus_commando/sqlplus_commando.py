@@ -35,9 +35,24 @@ class SqlplusCommando(object):
 
     def run_query(self, query, parameters={}, cast=True,
                   check_unknown_command=True):
-        command = self._process_query(query=query, parameters=parameters)
-        return self._run_command(command, cast=cast,
-                                 check_unknown_command=check_unknown_command)
+        if parameters:
+            query = self._process_parameters(query, parameters)
+        query = self.CATCH_ERRORS + query
+        session = subprocess.Popen(['sqlplus', '-S', '-L', '-M', 'HTML ON',
+                                    self._get_connection_url()],
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        session.stdin.write(query)
+        output, _ = session.communicate(self.EXIT_COMMAND)
+        code = session.returncode
+        if code != 0:
+            raise Exception(OracleErrorParser.parse(output))
+        else:
+            if output:
+                result = OracleResultParser.parse(output, cast=cast,
+                                                  check_unknown_command=check_unknown_command)
+                return result
 
     def run_script(self, script, cast=True, check_unknown_command=True):
         if not os.path.isfile(script):
@@ -45,29 +60,6 @@ class SqlplusCommando(object):
         with open(script) as stream:
             source = stream.read()
         return self.run_query(query=source, cast=cast, check_unknown_command=check_unknown_command)
-
-    def _process_query(self, query, parameters={}):
-        if parameters:
-            query = self._process_parameters(query, parameters)
-        return self.CATCH_ERRORS + query
-
-    def _run_command(self, command, cast, check_unknown_command):
-        connection_url = self._get_connection_url()
-        session = subprocess.Popen(['sqlplus', '-S', '-L', '-M', 'HTML ON',
-                                    connection_url],
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        session.stdin.write(command)
-        output, _ = session.communicate(self.EXIT_COMMAND)
-        code = session.returncode
-        if code != 0:
-            raise Exception(OracleErrorParser.parse(output))
-        else:
-            if output:
-                result = OracleResponseParser.parse(output, cast=cast,
-                                                    check_unknown_command=check_unknown_command)
-                return result
 
     def _get_connection_url(self):
         return "%s/%s@%s/%s" % \
@@ -111,7 +103,7 @@ class SqlplusCommando(object):
         return string.replace("'", "''")
 
 
-class OracleResponseParser(HTMLParser.HTMLParser):
+class OracleResultParser(HTMLParser.HTMLParser):
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
     UNKNOWN_COMMAND = 'SP2-0734: unknown command'
@@ -120,7 +112,7 @@ class OracleResponseParser(HTMLParser.HTMLParser):
         (r'-?\d*,?\d*([Ee][+-]?\d+)?', lambda f: float(f.replace(',', '.'))),
         (r'\d\d/\d\d/\d\d \d\d:\d\d:\d\d,\d*',
          lambda d: datetime.datetime.strptime(d[:17],
-                                              OracleResponseParser.DATE_FORMAT)),
+                                              OracleResultParser.DATE_FORMAT)),
         (r'NULL', lambda d: None),
     )
 
@@ -136,9 +128,11 @@ class OracleResponseParser(HTMLParser.HTMLParser):
 
     @staticmethod
     def parse(source, cast, check_unknown_command):
-        if OracleResponseParser.UNKNOWN_COMMAND in source and check_unknown_command:
+        if not source.strip():
+            return ()
+        if OracleResultParser.UNKNOWN_COMMAND in source and check_unknown_command:
             raise Exception(OracleErrorParser.parse(source))
-        parser = OracleResponseParser(cast)
+        parser = OracleResultParser(cast)
         parser.feed(source)
         return tuple(parser.result)
 
@@ -175,7 +169,7 @@ class OracleResponseParser(HTMLParser.HTMLParser):
 
     @staticmethod
     def _cast(value):
-        for regexp, function in OracleResponseParser.CASTS:
+        for regexp, function in OracleResultParser.CASTS:
             if re.match("^%s$" % regexp, value):
                 return function(value)
         return value

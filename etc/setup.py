@@ -11,6 +11,6 @@ setup(
     packages = ['sqlplus_commando'],
     url = 'http://pypi.python.org/pypi/sqlplus_commando/',
     license = 'Apache Software License',
-    description = 'sqlplus_commando is an Oracle command line driver calling sqlplus',
+    description = 'sqlplus_commando is an Oracle driver calling sqlplus',
     long_description=open('README.rst').read(),
 )

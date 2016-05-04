@@ -6,8 +6,6 @@ YELLOW=\033[1m\033[93m
 CYAN=\033[1m\033[96m
 CLEAR=\033[0m
 
-.PHONY: test
-
 help:
 	@echo "$(CYAN)init$(CLEAR)     Build virtualenv"
 	@echo "$(CYAN)clean$(CLEAR)    Clean generated files"

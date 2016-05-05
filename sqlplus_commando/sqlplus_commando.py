@@ -204,9 +204,9 @@ class SqlplusErrorParser(HTMLParser.HTMLParser):
 
 class SqlplusException(Exception):
 
-    def __init__(self, message, query):
+    def __init__(self, message, query=None):
         self.message = message
         self.query = query
 
     def __str__(self):
-        return message
+        return self.message

@@ -202,6 +202,7 @@ class SqlplusErrorParser(HTMLParser.HTMLParser):
         if self.active:
             self.message += data
 
+# pylint: disable=W0231
 class SqlplusException(Exception):
 
     def __init__(self, message, query=None):

@@ -47,10 +47,10 @@ class SqlplusCommando(object):
         output, _ = session.communicate(self.EXIT_COMMAND)
         code = session.returncode
         if code != 0:
-            raise Exception(OracleErrorParser.parse(output))
+            raise Exception(SqlplusErrorParser.parse(output))
         else:
             if output:
-                result = OracleResultParser.parse(output, cast=cast,
+                result = SqlplusResultParser.parse(output, cast=cast,
                                                   check_unknown_command=check_unknown_command)
                 return result
 
@@ -103,7 +103,7 @@ class SqlplusCommando(object):
         return string.replace("'", "''")
 
 
-class OracleResultParser(HTMLParser.HTMLParser):
+class SqlplusResultParser(HTMLParser.HTMLParser):
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
     UNKNOWN_COMMAND = 'SP2-0734: unknown command'
@@ -112,7 +112,7 @@ class OracleResultParser(HTMLParser.HTMLParser):
         (r'-?\d*,?\d*([Ee][+-]?\d+)?', lambda f: float(f.replace(',', '.'))),
         (r'\d\d/\d\d/\d\d \d\d:\d\d:\d\d,\d*',
          lambda d: datetime.datetime.strptime(d[:17],
-                                              OracleResultParser.DATE_FORMAT)),
+                                              SqlplusResultParser.DATE_FORMAT)),
         (r'NULL', lambda d: None),
     )
 
@@ -130,9 +130,9 @@ class OracleResultParser(HTMLParser.HTMLParser):
     def parse(source, cast, check_unknown_command):
         if not source.strip():
             return ()
-        if OracleResultParser.UNKNOWN_COMMAND in source and check_unknown_command:
-            raise Exception(OracleErrorParser.parse(source))
-        parser = OracleResultParser(cast)
+        if SqlplusResultParser.UNKNOWN_COMMAND in source and check_unknown_command:
+            raise Exception(SqlplusErrorParser.parse(source))
+        parser = SqlplusResultParser(cast)
         parser.feed(source)
         return tuple(parser.result)
 
@@ -169,13 +169,13 @@ class OracleResultParser(HTMLParser.HTMLParser):
 
     @staticmethod
     def _cast(value):
-        for regexp, function in OracleResultParser.CASTS:
+        for regexp, function in SqlplusResultParser.CASTS:
             if re.match("^%s$" % regexp, value):
                 return function(value)
         return value
 
 
-class OracleErrorParser(HTMLParser.HTMLParser):
+class SqlplusErrorParser(HTMLParser.HTMLParser):
 
     UNKNOWN_COMMAND = 'SP2-0734: unknown command'
 
@@ -186,7 +186,7 @@ class OracleErrorParser(HTMLParser.HTMLParser):
 
     @staticmethod
     def parse(source):
-        parser = OracleErrorParser()
+        parser = SqlplusErrorParser()
         parser.feed(source)
         return '\n'.join([l for l in parser.message.split('\n') if l.strip() != ''])
 

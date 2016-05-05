@@ -30,7 +30,7 @@ class SqlplusCommando(object):
             self.username = configuration['username']
             self.password = configuration['password']
         else:
-            raise Exception('Missing database configuration')
+            raise SqlplusException('Missing database configuration')
         self.cast = cast
 
     def run_query(self, query, parameters={}, cast=True,
@@ -47,7 +47,7 @@ class SqlplusCommando(object):
         output, _ = session.communicate(self.EXIT_COMMAND)
         code = session.returncode
         if code != 0:
-            raise Exception(SqlplusErrorParser.parse(output))
+            raise SqlplusException(SqlplusErrorParser.parse(output), query)
         else:
             if output:
                 result = SqlplusResultParser.parse(output, cast=cast,
@@ -56,7 +56,7 @@ class SqlplusCommando(object):
 
     def run_script(self, script, cast=True, check_unknown_command=True):
         if not os.path.isfile(script):
-            raise Exception("Script '%s' was not found" % script)
+            raise SqlplusException("Script '%s' was not found" % script)
         with open(script) as stream:
             source = stream.read()
         return self.run_query(query=source, cast=cast, check_unknown_command=check_unknown_command)
@@ -95,8 +95,8 @@ class SqlplusCommando(object):
         elif parameter is None:
             return "NULL"
         else:
-            raise Exception("Type '%s' is not managed as a query parameter" %
-                            parameter.__class__.__name__)
+            raise SqlplusException("Type '%s' is not managed as a query parameter" %
+                                   parameter.__class__.__name__)
 
     @staticmethod
     def _escape_string(string):
@@ -131,7 +131,7 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
         if not source.strip():
             return ()
         if SqlplusResultParser.UNKNOWN_COMMAND in source and check_unknown_command:
-            raise Exception(SqlplusErrorParser.parse(source))
+            raise SqlplusException(SqlplusErrorParser.parse(source))
         parser = SqlplusResultParser(cast)
         parser.feed(source)
         return tuple(parser.result)
@@ -201,3 +201,9 @@ class SqlplusErrorParser(HTMLParser.HTMLParser):
     def handle_data(self, data):
         if self.active:
             self.message += data
+
+class SqlplusException(Exception):
+
+    def __init__(self, message, query):
+       super(SqlplusException, self).__init__(message)
+       self.query = query

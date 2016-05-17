@@ -11,9 +11,9 @@
 #   removed:
 #   - "Description about what was removed."
 
-- vetsion: 0.1.6
-  date:    2016-05-??
-  summary: ???
+- version: 0.1.6
+  date:    2016-05-17
+  summary: Fixed documentation
   fixed:
   - "Fixed script execution."
   - "Fixed documentation in README file."

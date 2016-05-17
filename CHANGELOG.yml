@@ -11,6 +11,13 @@
 #   removed:
 #   - "Description about what was removed."
 
+- version: 0.1.6
+  date:    2016-05-17
+  summary: Fixed documentation
+  fixed:
+  - "Fixed script execution."
+  - "Fixed documentation in README file."
+
 - version: 0.1.5
   date:    2016-05-03
   summary: Improved error message management

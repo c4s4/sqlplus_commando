@@ -11,6 +11,13 @@
 #   removed:
 #   - "Description about what was removed."
 
+- version: 0.2.0
+  date:    2016-05-26
+  summary: Added warning detection
+  added:
+  - "Added warning detection (may be disabled passing 'check_warning=False'
+     calling run_query() or run_script())."
+
 - version: 0.1.6
   date:    2016-05-17
   summary: Fixed documentation

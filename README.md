@@ -109,7 +109,7 @@ Error management
 ----------------
 
 While running a query or a script with *sqlplus*, you must add following SQL
-commands so that the return value is différent from *0*:
+commands so that the return value is différent from *0* if an error occurs:
 
 ```sql
 WHENEVER SQLERROR EXIT SQL.SQLCODE;
@@ -128,6 +128,11 @@ This won't result in an error in *sqlplus* and we must parse the result for the
 error string `SP2-0734: unknown command`. This is done by default, but you may
 avoid this passing parameter `check_unknown_command=False` while calling
 functions `run_query` or `run_script`.
+
+Furthermore, a compilation error will result in a warning, thus it is often
+necessary to check for warnings in *sqlplus* output. This is done by default
+and will result in an exception, except if you pass `check_warning=False`
+calling `run_query` or `run_script`.
 
 Note
 ----

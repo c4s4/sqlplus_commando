@@ -17,6 +17,20 @@ class TestSqlplusCommando(unittest.TestCase):
         'password': 'test',
     }
     SQL_DIR = os.path.join(os.path.dirname(__file__), 'sql')
+    WARNING = '''
+CREATE OR REPLACE PACKAGE plwpk IS
+  PROCEDURE p(param OUT NOCOPY VARCHAR2);
+END plwpk;
+/
+
+CREATE OR REPLACE PACKAGE BODY plwpk IS
+  PROCEDURE p(param OUT NOCOPY VARCHAR2) IS
+BEGIN
+   param := 'test';
+END p;
+END plwpk
+/
+'''
 
     def test_run_query_nominal(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
@@ -46,6 +60,18 @@ class TestSqlplusCommando(unittest.TestCase):
                                    SqlplusResultParser.UNKNOWN_COMMAND,
                                    check_unknown_command=False)
         self.assertTrue(SqlplusResultParser.UNKNOWN_COMMAND in result[0]['MESSAGE'])
+
+    def test_warning(self):
+        sqlplus = SqlplusCommando(configuration=self.CONFIG)
+        try:
+            sqlplus.run_query(self.WARNING)
+            self.fail('Should have failed')
+        except Exception, e:
+            self.assertTrue("Warning: " in e.message)
+
+    def test_warning_disable(self):
+        sqlplus = SqlplusCommando(configuration=self.CONFIG)
+        sqlplus.run_query("SELECT 'Warning: test' FROM DUAL;", check_warning=False)
 
     def test_run_query_error(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)

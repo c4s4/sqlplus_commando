@@ -34,7 +34,8 @@ class SqlplusCommando(object):
         self.cast = cast
 
     def run_query(self, query, parameters={}, cast=True,
-                  check_unknown_command=True):
+                  check_unknown_command=True,
+                  check_warning=True):
         if parameters:
             query = self._process_parameters(query, parameters)
         query = self.CATCH_ERRORS + query
@@ -51,15 +52,18 @@ class SqlplusCommando(object):
         else:
             if output:
                 result = SqlplusResultParser.parse(output, cast=cast,
-                                                  check_unknown_command=check_unknown_command)
+                                                   check_unknown_command=check_unknown_command,
+                                                   check_warning=check_warning)
                 return result
 
-    def run_script(self, script, cast=True, check_unknown_command=True):
+    def run_script(self, script, cast=True, check_unknown_command=True, check_warning=True):
         if not os.path.isfile(script):
             raise SqlplusException("Script '%s' was not found" % script)
         with open(script) as stream:
             source = stream.read()
-        return self.run_query(query=source, cast=cast, check_unknown_command=check_unknown_command)
+        return self.run_query(query=source, cast=cast,
+                              check_unknown_command=check_unknown_command,
+                              check_warning=check_warning)
 
     def _get_connection_url(self):
         return "%s/%s@%s/%s" % \
@@ -107,6 +111,7 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
     UNKNOWN_COMMAND = 'SP2-0734: unknown command'
+    WARNING = 'Warning: '
     CASTS = (
         (r'-?\d+', int),
         (r'-?\d*,?\d*([Ee][+-]?\d+)?', lambda f: float(f.replace(',', '.'))),
@@ -127,10 +132,12 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
         self.data = ''
 
     @staticmethod
-    def parse(source, cast, check_unknown_command):
+    def parse(source, cast, check_unknown_command, check_warning):
         if not source.strip():
             return ()
-        if SqlplusResultParser.UNKNOWN_COMMAND in source and check_unknown_command:
+        if check_unknown_command and SqlplusResultParser.UNKNOWN_COMMAND in source:
+            raise SqlplusException(SqlplusErrorParser.parse(source))
+        if check_warning and SqlplusResultParser.WARNING in source:
             raise SqlplusException(SqlplusErrorParser.parse(source))
         parser = SqlplusResultParser(cast)
         parser.feed(source)

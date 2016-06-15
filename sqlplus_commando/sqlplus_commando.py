@@ -33,9 +33,7 @@ class SqlplusCommando(object):
             raise SqlplusException('Missing database configuration')
         self.cast = cast
 
-    def run_query(self, query, parameters={}, cast=True,
-                  check_unknown_command=True,
-                  check_warning=True):
+    def run_query(self, query, parameters={}, cast=True, check_errors=True):
         if parameters:
             query = self._process_parameters(query, parameters)
         query = self.CATCH_ERRORS + query
@@ -51,19 +49,15 @@ class SqlplusCommando(object):
             raise SqlplusException(SqlplusErrorParser.parse(output), query)
         else:
             if output:
-                result = SqlplusResultParser.parse(output, cast=cast,
-                                                   check_unknown_command=check_unknown_command,
-                                                   check_warning=check_warning)
+                result = SqlplusResultParser.parse(output, cast=cast, check_errors=check_errors)
                 return result
 
-    def run_script(self, script, cast=True, check_unknown_command=True, check_warning=True):
+    def run_script(self, script, cast=True, check_errors=True):
         if not os.path.isfile(script):
             raise SqlplusException("Script '%s' was not found" % script)
         with open(script) as stream:
             source = stream.read()
-        return self.run_query(query=source, cast=cast,
-                              check_unknown_command=check_unknown_command,
-                              check_warning=check_warning)
+        return self.run_query(query=source, cast=cast, check_errors=check_errors)
 
     def _get_connection_url(self):
         return "%s/%s@%s/%s" % \
@@ -110,8 +104,7 @@ class SqlplusCommando(object):
 class SqlplusResultParser(HTMLParser.HTMLParser):
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
-    UNKNOWN_COMMAND = 'SP2-0734: unknown command'
-    WARNING = 'Warning: '
+    ERRORS = ('unknown', 'warning', 'error')
     CASTS = (
         (r'-?\d+', int),
         (r'-?\d*,?\d*([Ee][+-]?\d+)?', lambda f: float(f.replace(',', '.'))),
@@ -132,13 +125,13 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
         self.data = ''
 
     @staticmethod
-    def parse(source, cast, check_unknown_command, check_warning):
+    def parse(source, cast, check_errors):
         if not source.strip():
             return ()
-        if check_unknown_command and SqlplusResultParser.UNKNOWN_COMMAND in source:
-            raise SqlplusException(SqlplusErrorParser.parse(source))
-        if check_warning and SqlplusResultParser.WARNING in source:
-            raise SqlplusException(SqlplusErrorParser.parse(source))
+        if check_errors:
+            for regexp in SqlplusResultParser.ERRORS:
+                if re.search(regexp, source, re.IGNORECASE):
+                    raise SqlplusException(SqlplusErrorParser.parse(source))
         parser = SqlplusResultParser(cast)
         parser.feed(source)
         return tuple(parser.result)
@@ -183,8 +176,6 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
 
 
 class SqlplusErrorParser(HTMLParser.HTMLParser):
-
-    UNKNOWN_COMMAND = 'SP2-0734: unknown command'
 
     def __init__(self):
         HTMLParser.HTMLParser.__init__(self)

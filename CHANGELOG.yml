@@ -11,6 +11,12 @@
 #   removed:
 #   - "Description about what was removed."
 
+- version: 0.4.0
+  date:    2016-07-06
+  summary: Managing script encoding
+  added:
+  - "Added script encoding management."
+
 - version: 0.3.0
   date:    2016-06-15
   summary: Improved Oracle error parsing

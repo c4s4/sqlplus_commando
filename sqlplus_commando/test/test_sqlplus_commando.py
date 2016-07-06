@@ -11,8 +11,8 @@ from sqlplus_commando import SqlplusCommando, SqlplusResultParser
 class TestSqlplusCommando(unittest.TestCase):
 
     CONFIG = {
-        'hostname': 'localhost',
-        'database': 'xe',
+        'hostname': 'localhost:1521',
+        'database': 'orcl',
         'username': 'test',
         'password': 'test',
     }
@@ -111,8 +111,7 @@ END plwpk
             sqlplus.run_script(script)
             self.fail('Should have failed')
         except Exception, e:
-            self.assertTrue("ORA-00942: table or view does not exist" in
-                            e.message)
+            self.assertTrue("ERROR" in e.message)
 
     def test_run_script_unknown_command(self):
         script = os.path.join(self.SQL_DIR,

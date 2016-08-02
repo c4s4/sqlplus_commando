@@ -3,7 +3,6 @@
 
 from __future__ import with_statement
 import re
-import codecs
 import os.path
 import datetime
 import subprocess
@@ -60,15 +59,8 @@ class SqlplusCommando(object):
     def run_script(self, script, cast=True, check_errors=True):
         if not os.path.isfile(script):
             raise SqlplusException("Script '%s' was not found" % script)
-        if self.encoding:
-            # read enforcing encoding
-            with codecs.open(script, mode='rb', encoding=self.encoding, errors='strict') as stream:
-                source = stream.read()
-        else:
-            # read without encoding
-            with open(script) as stream:
-                source = stream.read()
-        return self.run_query(query=source, cast=cast, check_errors=check_errors)
+        query = "@%s\n" % script
+        return self.run_query(query=query, cast=cast, check_errors=check_errors)
 
     def _get_connection_url(self):
         return "%s/%s@%s/%s" % \

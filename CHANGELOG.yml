@@ -11,6 +11,12 @@
 #   removed:
 #   - "Description about what was removed."
 
+- version: 0.4.1
+  date:    2016-08-02
+  summary: Improved code to run scripts
+  fixed:
+  - "Improved code to run scripts using @script command."
+
 - version: 0.4.0
   date:    2016-07-06
   summary: Managing script encoding

@@ -12,7 +12,7 @@ import HTMLParser
 class SqlplusCommando(object):
 
     CATCH_ERRORS = "WHENEVER SQLERROR EXIT SQL.SQLCODE;\nWHENEVER OSERROR EXIT 9;\n"
-    EXIT_COMMAND = "\ncommit;\nexit;\n"
+    EXIT_COMMAND = "\nCOMMIT;\nEXIT;\n"
     ISO_FORMAT = '%Y-%m-%d %H:%M:%S'
 
     def __init__(self, configuration=None,

@@ -11,6 +11,10 @@
 #   removed:
 #   - "Description about what was removed."
 
+- version: 0.?.?
+  date:    2016-08-??
+  summary: 
+
 - version: 0.4.1
   date:    2016-08-02
   summary: Improved code to run scripts

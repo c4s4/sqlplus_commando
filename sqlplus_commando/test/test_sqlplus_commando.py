@@ -55,8 +55,12 @@ END plwpk
             self.assertTrue("unknown command" in e.message)
 
     def test_run_unknown_command_disable(self):
-        message = SqlplusResultParser.ERRORS[0]
+        message = 'This is an Error!'
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
+        result = sqlplus.run_query("SELECT '%s' AS message FROM DUAL;" % message,
+                                   check_errors=False)
+        self.assertTrue(message in result[0]['MESSAGE'])
+        message = 'This is a warning!'
         result = sqlplus.run_query("SELECT '%s' AS message FROM DUAL;" % message,
                                    check_errors=False)
         self.assertTrue(message in result[0]['MESSAGE'])

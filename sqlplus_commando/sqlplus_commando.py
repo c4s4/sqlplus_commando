@@ -12,7 +12,7 @@ import HTMLParser
 class SqlplusCommando(object):
 
     CATCH_ERRORS = "WHENEVER SQLERROR EXIT SQL.SQLCODE;\nWHENEVER OSERROR EXIT 9;\n"
-    EXIT_COMMAND = "\ncommit;\nexit;\n"
+    EXIT_COMMAND = "\nCOMMIT;\nEXIT;\n"
     ISO_FORMAT = '%Y-%m-%d %H:%M:%S'
 
     def __init__(self, configuration=None,
@@ -107,7 +107,7 @@ class SqlplusCommando(object):
 class SqlplusResultParser(HTMLParser.HTMLParser):
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
-    ERRORS = ('unknown', 'warning', 'error')
+    REGEXP_ERRORS = ('^.*unknown.*$|^.*warning.*$|^.*error.*$')
     CASTS = (
         (r'-?\d+', int),
         (r'-?\d*,?\d*([Ee][+-]?\d+)?', lambda f: float(f.replace(',', '.'))),
@@ -132,9 +132,10 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
         if not source.strip():
             return ()
         if check_errors:
-            for regexp in SqlplusResultParser.ERRORS:
-                if re.search(regexp, source, re.IGNORECASE):
-                    raise SqlplusException(SqlplusErrorParser.parse(source))
+            errors = re.findall(SqlplusResultParser.REGEXP_ERRORS, source,
+                                re.MULTILINE + re.IGNORECASE)
+            if errors:
+                raise SqlplusException('\n'.join(errors))
         parser = SqlplusResultParser(cast)
         parser.feed(source)
         return tuple(parser.result)
@@ -180,6 +181,8 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
 
 class SqlplusErrorParser(HTMLParser.HTMLParser):
 
+    NB_ERROR_LINES = 4
+
     def __init__(self):
         HTMLParser.HTMLParser.__init__(self)
         self.active = False
@@ -189,7 +192,8 @@ class SqlplusErrorParser(HTMLParser.HTMLParser):
     def parse(source):
         parser = SqlplusErrorParser()
         parser.feed(source)
-        return '\n'.join([l for l in parser.message.split('\n') if l.strip() != ''])
+        lines = [l for l in parser.message.split('\n') if l.strip() != '']
+        return '\n'.join(lines[-SqlplusErrorParser.NB_ERROR_LINES:])
 
     def handle_starttag(self, tag, attrs):
         if tag == 'body':

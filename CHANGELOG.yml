@@ -11,6 +11,12 @@
 #   removed:
 #   - "Description about what was removed."
 
+- version: 0.4.2
+  date:    2016-08-17
+  summary: Improved error reporting
+  fixed:
+  - "Improved error reporting while running large scripts."
+
 - version: 0.4.1
   date:    2016-08-02
   summary: Improved code to run scripts

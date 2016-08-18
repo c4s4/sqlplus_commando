@@ -214,7 +214,7 @@ class SqlplusException(Exception):
         self.message = message
         self.query = query
         # raised is set to True if sqlplus stops on error running a script,
-        # it is set to False is the error was detected in output (with a text
+        # it is set to False if the error was detected in output (with a text
         # such as "Package compilation error")
         self.raised = raised
 

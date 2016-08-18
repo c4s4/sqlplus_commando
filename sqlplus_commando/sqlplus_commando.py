@@ -50,7 +50,7 @@ class SqlplusCommando(object):
         output, _ = session.communicate(self.EXIT_COMMAND)
         code = session.returncode
         if code != 0:
-            raise SqlplusException(SqlplusErrorParser.parse(output), query)
+            raise SqlplusException(SqlplusErrorParser.parse(output), query, raised=True)
         else:
             if output:
                 result = SqlplusResultParser.parse(output, cast=cast, check_errors=check_errors)
@@ -135,7 +135,7 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
             errors = re.findall(SqlplusResultParser.REGEXP_ERRORS, source,
                                 re.MULTILINE + re.IGNORECASE)
             if errors:
-                raise SqlplusException('\n'.join(errors))
+                raise SqlplusException('\n'.join(errors), raised=False)
         parser = SqlplusResultParser(cast)
         parser.feed(source)
         return tuple(parser.result)
@@ -210,9 +210,13 @@ class SqlplusErrorParser(HTMLParser.HTMLParser):
 # pylint: disable=W0231
 class SqlplusException(Exception):
 
-    def __init__(self, message, query=None):
+    def __init__(self, message, query=None, raised=False):
         self.message = message
         self.query = query
+        # raised is set to True if sqlplus stops on error running a script,
+        # it is set to False is the error was detected in output (with a text
+        # such as "Package compilation error")
+        self.raised = raised
 
     def __str__(self):
         return self.message

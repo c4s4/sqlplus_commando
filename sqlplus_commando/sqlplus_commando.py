@@ -29,8 +29,7 @@ class SqlplusCommando(object):
                  encoding=None, cast=True):
         """
         Constructor.
-
-        :param configuration: configuration as a dictionnary with four following
+        :param configuration: configuration as a dictionary with four following
                parameters.
         :param hostname: database hostname.
         :param database: database name.
@@ -58,11 +57,11 @@ class SqlplusCommando(object):
         """
         Run a given query.
         :param query: the query to run
-        :param parameters: query parameters as a dictionnary (with references as
+        :param parameters: query parameters as a dictionary (with references as
                '%(name)s' in query) or tuple (with references such as '%s')
         :param cast: tells if we should cast result
         :param check_errors: check for errors in output
-        :return: result query as a tuple of dictionnaries
+        :return: result query as a tuple of dictionaries
         """
         if parameters:
             query = self._process_parameters(query, parameters)
@@ -91,7 +90,7 @@ class SqlplusCommando(object):
         :param script: the path to the script to run
         :param cast: tells if we should cast result
         :param check_errors: check for errors in output
-        :return: result query as a tuple of dictionnaries
+        :return: result query as a tuple of dictionaries
         """
         if not os.path.isfile(script):
             raise SqlplusException("Script '%s' was not found" % script)
@@ -111,7 +110,7 @@ class SqlplusCommando(object):
         """
         Replace parameters references in query with their value.
         :param query: the query to process
-        :param parameters: parameters as a dictionnary or a tuple
+        :param parameters: parameters as a dictionary or a tuple
         :return: query with parameters references replaced with their value
         """
         if not parameters:
@@ -172,7 +171,7 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
 
     """
     Sqlplus result is formatted as HTML with 'HTML ON' option. This parser
-    extracts result in HTML table and returns it as a tuple of dictionnaries.
+    extracts result in HTML table and returns it as a tuple of dictionaries.
     """
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
@@ -207,7 +206,7 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
         :param source: the output
         :param cast: tells if we should cast result
         :param check_errors: tells if we should parse output for errors
-        :return: result as a tuple of dictionnaries
+        :return: result as a tuple of dictionaries
         """
         if not source.strip():
             return ()

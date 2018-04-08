@@ -1,5 +1,6 @@
-build/
-venv/
-.idea/
-.ropeproject/
+/build/
+/venv*/
+/.idea/
+/.vscode/
+/venv
 *.pyc

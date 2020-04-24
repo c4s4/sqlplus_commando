@@ -6,7 +6,11 @@ import re
 import os.path
 import datetime
 import subprocess
-import HTMLParser
+import sys
+if sys.version_info.major == 2:
+    from HTMLParser import HTMLParser
+elif sys.version_info.major == 3:
+    from html.parser import HTMLParser
 
 
 class SqlplusCommando(object):
@@ -104,7 +108,7 @@ class SqlplusCommando(object):
         return string.replace("'", "''")
 
 
-class SqlplusResultParser(HTMLParser.HTMLParser):
+class SqlplusResultParser(HTMLParser):
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
     REGEXP_ERRORS = ('^.*unknown.*$|^.*warning.*$|^.*error.*$')
@@ -118,7 +122,7 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
     )
 
     def __init__(self, cast):
-        HTMLParser.HTMLParser.__init__(self)
+        HTMLParser.__init__(self)
         self.cast = cast
         self.active = False
         self.result = []
@@ -179,12 +183,12 @@ class SqlplusResultParser(HTMLParser.HTMLParser):
         return value
 
 
-class SqlplusErrorParser(HTMLParser.HTMLParser):
+class SqlplusErrorParser(HTMLParser):
 
     NB_ERROR_LINES = 4
 
     def __init__(self):
-        HTMLParser.HTMLParser.__init__(self)
+        HTMLParser.__init__(self)
         self.active = False
         self.message = ''
 

@@ -1,20 +1,15 @@
 #!/usr/bin/env python
 # encoding: UTF-8
+# pylint: disable=W0223
 
-from __future__ import with_statement
 import re
 import os.path
 import datetime
 import subprocess
-import sys
-if sys.version_info.major == 2:
-    from HTMLParser import HTMLParser
-elif sys.version_info.major == 3:
-    from html.parser import HTMLParser
+from html.parser import HTMLParser
 
 
-class SqlplusCommando(object):
-
+class SqlplusCommando:
     """
     Oracle driver that calls sqlplus on command line to run queries or scripts.
     WHENEVER statements are added to interrupt on SQL and OS errors.
@@ -83,10 +78,10 @@ class SqlplusCommando(object):
         code = session.returncode
         if code != 0:
             raise SqlplusException(SqlplusErrorParser.parse(output), query, raised=True)
-        else:
-            if output:
-                result = SqlplusResultParser.parse(output, cast=cast, check_errors=check_errors)
-                return result
+        if output:
+            result = SqlplusResultParser.parse(output, cast=cast, check_errors=check_errors)
+            return result
+        return None
 
     def run_script(self, script, cast=True, check_errors=True):
         """
@@ -146,20 +141,19 @@ class SqlplusCommando(object):
         :param parameter: parameters to format
         :return: formatted parameter
         """
-        if isinstance(parameter, (int, long, float)):
+        if isinstance(parameter, (int, float)):
             return str(parameter)
-        elif isinstance(parameter, (str, unicode)):
+        if isinstance(parameter, str):
             return "'%s'" % SqlplusCommando._escape_string(parameter)
-        elif isinstance(parameter, datetime.datetime):
+        if isinstance(parameter, datetime.datetime):
             return "'%s'" % parameter.strftime(SqlplusCommando.ISO_FORMAT)
-        elif isinstance(parameter, list):
+        if isinstance(parameter, list):
             return "(%s)" % ', '.join([SqlplusCommando._format_parameter(e)
                                        for e in parameter])
-        elif parameter is None:
+        if parameter is None:
             return "NULL"
-        else:
-            raise SqlplusException("Type '%s' is not managed as a query parameter" %
-                                   parameter.__class__.__name__)
+        raise SqlplusException("Type '%s' is not managed as a query parameter" %
+                               parameter.__class__.__name__)
 
     @staticmethod
     def _escape_string(string):
@@ -172,7 +166,6 @@ class SqlplusCommando(object):
 
 
 class SqlplusResultParser(HTMLParser):
-
     """
     Sqlplus result is formatted as HTML with 'HTML ON' option. This parser
     extracts result in HTML table and returns it as a tuple of dictionaries.
@@ -281,7 +274,6 @@ class SqlplusResultParser(HTMLParser):
 
 
 class SqlplusErrorParser(HTMLParser):
-
     """
     Parse error output.
     """

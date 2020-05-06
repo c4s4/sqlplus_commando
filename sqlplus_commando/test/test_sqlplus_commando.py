@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # encoding: UTF-8
+# pylint: disable=W0212
 
 import os
 import datetime
 import unittest
-from sqlplus_commando import SqlplusCommando, SqlplusResultParser
+from sqlplus_commando.sqlplus_commando import SqlplusCommando, SqlplusResultParser
 
 
-# pylint: disable=W0212
 class TestSqlplusCommando(unittest.TestCase):
 
     CONFIG = {
@@ -51,7 +51,7 @@ END plwpk
         try:
             sqlplus.run_query("BAD SQL QUERY;")
             self.fail('Should have failed')
-        except Exception, e:
+        except Exception as e:
             self.assertTrue("unknown command" in e.message)
 
     def test_run_unknown_command_disable(self):
@@ -70,7 +70,7 @@ END plwpk
         try:
             sqlplus.run_query(self.WARNING)
             self.fail('Should have failed')
-        except Exception, e:
+        except Exception as e:
             self.assertTrue("Warning: " in e.message)
 
     def test_warning_disable(self):
@@ -82,7 +82,7 @@ END plwpk
         try:
             sqlplus.run_query("SELECT 42 FROM DUO;")
             self.fail('Should have failed')
-        except Exception, e:
+        except Exception as e:
             self.assertTrue("ERROR at line 1" in e.message)
 
     def test_run_query_empty(self):
@@ -105,7 +105,7 @@ END plwpk
         try:
             sqlplus.run_script("unknown.sql")
             self.fail('Should have failed')
-        except Exception, e:
+        except Exception as e:
             self.assertTrue("Script 'unknown.sql' was not found" in str(e))
 
     def test_run_script_syntax_error(self):
@@ -114,7 +114,7 @@ END plwpk
         try:
             sqlplus.run_script(script)
             self.fail('Should have failed')
-        except Exception, e:
+        except Exception as e:
             self.assertTrue("ERROR" in e.message)
 
     def test_run_script_unknown_command(self):
@@ -124,12 +124,12 @@ END plwpk
         try:
             sqlplus.run_script(script)
             self.fail('Should have failed')
-        except Exception, e:
+        except Exception as e:
             self.assertTrue("unknown command" in e.message)
 
     def test_process_parameters(self):
         query = "%s %s %s"
-        parameters = [1, 'deux', datetime.datetime(2014, 01, 22, 13, 10, 33)]
+        parameters = [1, 'deux', datetime.datetime(2014, 1, 22, 13, 10, 33)]
         expected = "1 'deux' '2014-01-22 13:10:33'"
         actual = SqlplusCommando._process_parameters(query, parameters)
         self.assertEqual(expected, actual)

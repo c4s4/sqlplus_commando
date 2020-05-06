@@ -11,6 +11,14 @@
 #   removed:
 #   - "Description about what was removed."
 
+- version: 0.?.?
+  date:    2016-??-??
+  summary: ???
+  added:
+  - "Added raised field in SqlplusException: set to True if sqlplus stops on
+     error running a script, it is set to False if the error was detected in
+     output (with a text such as 'Package compilation error')."
+
 - version: 0.4.2
   date:    2016-08-17
   summary: Improved error reporting

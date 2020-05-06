@@ -15,6 +15,14 @@ elif sys.version_info.major == 3:
 
 class SqlplusCommando(object):
 
+    """
+    Oracle driver that calls sqlplus on command line to run queries or scripts.
+    WHENEVER statements are added to interrupt on SQL and OS errors.
+    Nevertheless some errors (such as compilation errors in package bodies) do
+    not interrupt scripts on error. Thus, this tool parses sqlplus output to
+    raise an error on 'error', 'warning' or 'unknown'.
+    """
+
     CATCH_ERRORS = "WHENEVER SQLERROR EXIT SQL.SQLCODE;\nWHENEVER OSERROR EXIT 9;\n"
     EXIT_COMMAND = "\nCOMMIT;\nEXIT;\n"
     ISO_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -23,6 +31,17 @@ class SqlplusCommando(object):
                  hostname=None, database=None,
                  username=None, password=None,
                  encoding=None, cast=True):
+        """
+        Constructor.
+        :param configuration: configuration as a dictionary with four following
+               parameters.
+        :param hostname: database hostname.
+        :param database: database name.
+        :param username: database user name.
+        :param password: database password.
+        :param encoding: database encoding.
+        :param cast: tells if we should cast result
+        """
         if hostname and database and username and password:
             self.hostname = hostname
             self.database = database
@@ -39,6 +58,15 @@ class SqlplusCommando(object):
         self.cast = cast
 
     def run_query(self, query, parameters={}, cast=True, check_errors=True):
+        """
+        Run a given query.
+        :param query: the query to run
+        :param parameters: query parameters as a dictionary (with references as
+               '%(name)s' in query) or tuple (with references such as '%s')
+        :param cast: tells if we should cast result
+        :param check_errors: check for errors in output
+        :return: result query as a tuple of dictionaries
+        """
         if parameters:
             query = self._process_parameters(query, parameters)
         query = self.CATCH_ERRORS + query
@@ -54,24 +82,41 @@ class SqlplusCommando(object):
         output, _ = session.communicate(self.EXIT_COMMAND)
         code = session.returncode
         if code != 0:
-            raise SqlplusException(SqlplusErrorParser.parse(output), query)
+            raise SqlplusException(SqlplusErrorParser.parse(output), query, raised=True)
         else:
             if output:
                 result = SqlplusResultParser.parse(output, cast=cast, check_errors=check_errors)
                 return result
 
     def run_script(self, script, cast=True, check_errors=True):
+        """
+        Run a given script.
+        :param script: the path to the script to run
+        :param cast: tells if we should cast result
+        :param check_errors: check for errors in output
+        :return: result query as a tuple of dictionaries
+        """
         if not os.path.isfile(script):
             raise SqlplusException("Script '%s' was not found" % script)
         query = "@%s\n" % script
         return self.run_query(query=query, cast=cast, check_errors=check_errors)
 
     def _get_connection_url(self):
+        """
+        Return connection URL
+        :return: connection URL
+        """
         return "%s/%s@%s/%s" % \
                (self.username, self.password, self.hostname, self.database)
 
     @staticmethod
     def _process_parameters(query, parameters):
+        """
+        Replace parameters references in query with their value.
+        :param query: the query to process
+        :param parameters: parameters as a dictionary or a tuple
+        :return: query with parameters references replaced with their value
+        """
         if not parameters:
             return query
         if isinstance(parameters, (list, tuple)):
@@ -83,11 +128,24 @@ class SqlplusCommando(object):
 
     @staticmethod
     def _format_parameters(parameters):
+        """
+        Format parameters to SQL syntax.
+        :param parameters: parameters to format as a list
+        :return: formatted parameters
+        """
         return [SqlplusCommando._format_parameter(param) for
                 param in parameters]
 
     @staticmethod
     def _format_parameter(parameter):
+        """
+        Format a single parameter:
+        - Let integers alone
+        - Surround strings with quotes
+        - Lists with parentheses
+        :param parameter: parameters to format
+        :return: formatted parameter
+        """
         if isinstance(parameter, (int, long, float)):
             return str(parameter)
         elif isinstance(parameter, (str, unicode)):
@@ -105,10 +163,20 @@ class SqlplusCommando(object):
 
     @staticmethod
     def _escape_string(string):
+        """
+        Replace quotes with two quotes.
+        :param string: string to escape
+        :return: escaped string
+        """
         return string.replace("'", "''")
 
 
 class SqlplusResultParser(HTMLParser):
+
+    """
+    Sqlplus result is formatted as HTML with 'HTML ON' option. This parser
+    extracts result in HTML table and returns it as a tuple of dictionaries.
+    """
 
     DATE_FORMAT = '%d/%m/%y %H:%M:%S'
     REGEXP_ERRORS = ('^.*unknown.*$|^.*warning.*$|^.*error.*$')
@@ -122,6 +190,10 @@ class SqlplusResultParser(HTMLParser):
     )
 
     def __init__(self, cast):
+        """
+        Constructor.
+        :param cast: tells if we should cast result
+        """
         HTMLParser.__init__(self)
         self.cast = cast
         self.active = False
@@ -133,18 +205,30 @@ class SqlplusResultParser(HTMLParser):
 
     @staticmethod
     def parse(source, cast, check_errors):
+        """
+        Parse sqlplus output.
+        :param source: the output
+        :param cast: tells if we should cast result
+        :param check_errors: tells if we should parse output for errors
+        :return: result as a tuple of dictionaries
+        """
         if not source.strip():
             return ()
         if check_errors:
             errors = re.findall(SqlplusResultParser.REGEXP_ERRORS, source,
                                 re.MULTILINE + re.IGNORECASE)
             if errors:
-                raise SqlplusException('\n'.join(errors))
+                raise SqlplusException('\n'.join(errors), raised=False)
         parser = SqlplusResultParser(cast)
         parser.feed(source)
         return tuple(parser.result)
 
     def handle_starttag(self, tag, attrs):
+        """
+        Called by HTML parser on an opening tag
+        :param tag: opened tag
+        :param attrs: attributes
+        """
         if tag == 'table':
             self.active = True
         elif self.active:
@@ -154,6 +238,10 @@ class SqlplusResultParser(HTMLParser):
                 self.header = False
 
     def handle_endtag(self, tag):
+        """
+        Called by HTML parser on an ending tag
+        :param tag: closed tag
+        """
         if tag == 'table':
             self.active = False
         elif self.active:
@@ -172,11 +260,20 @@ class SqlplusResultParser(HTMLParser):
                 self.data = ''
 
     def handle_data(self, data):
+        """
+        Handle text
+        :param data: text
+        """
         if self.active:
             self.data += data
 
     @staticmethod
     def _cast(value):
+        """
+        Cast given value
+        :param value: value to cast
+        :return: casted value
+        """
         for regexp, function in SqlplusResultParser.CASTS:
             if re.match("^%s$" % regexp, value):
                 return function(value)
@@ -185,38 +282,81 @@ class SqlplusResultParser(HTMLParser):
 
 class SqlplusErrorParser(HTMLParser):
 
+    """
+    Parse error output.
+    """
+
     NB_ERROR_LINES = 4
 
     def __init__(self):
+        """
+        Constructor.
+        """
         HTMLParser.__init__(self)
         self.active = False
         self.message = ''
 
     @staticmethod
     def parse(source):
+        """
+        Parse error ourput.
+        :param source: text to parse
+        :return: return formatted error message
+        """
         parser = SqlplusErrorParser()
         parser.feed(source)
         lines = [l for l in parser.message.split('\n') if l.strip() != '']
         return '\n'.join(lines[-SqlplusErrorParser.NB_ERROR_LINES:])
 
     def handle_starttag(self, tag, attrs):
+        """
+        Called on an opening tag
+        :param tag: opened tag
+        :param attrs: attributes
+        """
         if tag == 'body':
             self.active = True
 
     def handle_endtag(self, tag):
+        """
+        Called on closed tag
+        :param tag: clased tag
+        """
         if tag == 'body':
             self.active = False
 
     def handle_data(self, data):
+        """
+        Called on text
+        :param data: text
+        """
         if self.active:
             self.message += data
+
 
 # pylint: disable=W0231
 class SqlplusException(Exception):
 
-    def __init__(self, message, query=None):
+    """
+    Exception raised by this driver.
+    """
+
+    def __init__(self, message, query=None, raised=False):
+        """
+        Constructor.
+        :param message: the error message
+        :param query: query that raised an error
+        :param raised: raised is set to True if sqlplus stops on error running
+               a script, it is set to False if the error was detected in output
+               (with a text such as "Package compilation error")
+        """
         self.message = message
         self.query = query
+        self.raised = raised
 
     def __str__(self):
+        """
+        String representation of this error
+        :return: representation as a string
+        """
         return self.message

@@ -1,6 +1,6 @@
 /build/
-/venv*/
-/.idea/
+/venv/
+/.make/
 /.vscode/
-/venv
+__pycache__/
 *.pyc

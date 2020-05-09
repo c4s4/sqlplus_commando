@@ -12,7 +12,7 @@ class TestSqlplusCommando(unittest.TestCase):
 
     CONFIG = {
         'hostname': 'localhost:1521',
-        'database': 'orcl',
+        'database': 'test',
         'username': 'test',
         'password': 'test',
     }
@@ -52,7 +52,7 @@ END plwpk
             sqlplus.run_query("BAD SQL QUERY;")
             self.fail('Should have failed')
         except Exception as e:
-            self.assertTrue("unknown command" in e.message)
+            self.assertTrue("unknown command" in str(e))
 
     def test_run_unknown_command_disable(self):
         message = 'This is an Error!'
@@ -71,7 +71,7 @@ END plwpk
             sqlplus.run_query(self.WARNING)
             self.fail('Should have failed')
         except Exception as e:
-            self.assertTrue("Warning: " in e.message)
+            self.assertTrue("Warning: " in str(e))
 
     def test_warning_disable(self):
         sqlplus = SqlplusCommando(configuration=self.CONFIG)
@@ -83,7 +83,7 @@ END plwpk
             sqlplus.run_query("SELECT 42 FROM DUO;")
             self.fail('Should have failed')
         except Exception as e:
-            self.assertTrue("ERROR at line 1" in e.message)
+            self.assertTrue("ERROR at line 1" in str(e))
 
     def test_run_query_empty(self):
         script = os.path.join(self.SQL_DIR, 'test_sqlplus_commando.sql')
@@ -115,7 +115,7 @@ END plwpk
             sqlplus.run_script(script)
             self.fail('Should have failed')
         except Exception as e:
-            self.assertTrue("ERROR" in e.message)
+            self.assertTrue("ERROR" in str(e))
 
     def test_run_script_unknown_command(self):
         script = os.path.join(self.SQL_DIR,
@@ -125,7 +125,7 @@ END plwpk
             sqlplus.run_script(script)
             self.fail('Should have failed')
         except Exception as e:
-            self.assertTrue("unknown command" in e.message)
+            self.assertTrue("unknown command" in str(e))
 
     def test_process_parameters(self):
         query = "%s %s %s"
